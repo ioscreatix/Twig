@@ -15,7 +15,7 @@
 		<key>isController</key>
 		<true/>
 		<key>label</key>
-		<string>TwigPrefs</string>
+		<string>Twig</string>
 	</dict>
 </dict>
 </plist>
