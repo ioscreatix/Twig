@@ -15,7 +15,11 @@
 
 static BOOL IS_RTL = NO;
 static BOOL RTL_IS_SET = NO;
+static BOOL enabled = YES;
+static BOOL conditions = NO;
+static BOOL location = NO;
 
+%group Twig
 %hook SBFLockScreenDateView
 %property (nonatomic, retain) UIView *weatherView;
 - (CGFloat)alignmentPercent {
@@ -87,12 +91,21 @@ static BOOL RTL_IS_SET = NO;
 	return %orig(2,arg2);
 }
 -(double)locationLabelBaselineToTemperatureLabelBaseline {
+	if (enabled && location) {
+		%orig;
+	}
 	return 0;
 }
 -(double)conditionsLabelBaselineToLocationLabelBaseline {
+	if (enabled && location) {
+		%orig;
+	}
 	return 0;
 }
 -(double)conditionsLabelBaselineToBottom {
+	if (enabled && location) {
+		%orig;
+	}
 	return 0;
 }
 %end
@@ -100,14 +113,43 @@ static BOOL RTL_IS_SET = NO;
 %hook WATodayPadView
 - (void)layoutSubviews {
 	%orig;
-	if (self.conditionsLabel) {
+	if (self.conditionsLabel && conditions == NO) {
 		self.conditionsLabel.hidden = YES;
 		self.conditionsLabel.alpha = 0;
+	} else {
+		self.conditionsLabel.hidden = NO;
+		self.conditionsLabel.alpha = 1;
 	}
 
-	if (self.locationLabel) {
+	if (self.locationLabel && location == NO) {
 		self.locationLabel.alpha = 0;
 		self.locationLabel.hidden = YES;
+	} else {
+		self.locationLabel.alpha = 1;
+		self.locationLabel.hidden = NO;
 	}
 }
 %end
+%end
+
+%ctor {
+	NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:@"/var/mobile/Library/Preferences/com.ioscreatix.plist"];
+
+	if (enabled) {
+		%init(Twig);
+	}
+
+	if (prefs) {
+		if ([prefs objectForKey:@"isEnabled"]) {
+			enabled = [[prefs valueForKey:@"isEnabled"] boolValue];
+		}
+
+		if ([prefs objectForKey:@"conditions"]) {
+			conditions = [[prefs valueForKey:@"conditions"] boolValue];
+		}
+
+		if ([prefs objectForKey:@"location"]) {
+			location = [[prefs valueForKey:@"location"] boolValue];
+		}
+	}
+}
